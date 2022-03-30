@@ -1,0 +1,20 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+apiVersion: app.awsblueprints.io/v1alpha1
+kind: ExampleAppLambda
+metadata:
+  name: example-application
+  namespace: example-app
+spec:
+  writeConnectionSecretToRef:
+    name: example-application-secrets
+  resourceConfig:
+    providerConfigName: aws-provider-config
+    jetProviderConfigName: jet-aws-provider-config
+    region: us-west-2
+  permissionsBoundaryArn: "arn:aws:iam::833162080385:policy/crossplaneBoundary"
+  imageUri: 833162080385.dkr.ecr.us-west-2.amazonaws.com/dummy:0.0.1
+  tableSpec:
+    hashKeyName: id
+    hashKeyType: S
