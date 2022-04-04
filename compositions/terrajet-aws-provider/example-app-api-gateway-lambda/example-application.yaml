@@ -155,7 +155,7 @@ spec:
         kind: SecurityGroup
         spec:
           forProvider:
-            description: "rds-postgres-sg"
+            description: "api-gateway-vpc-endpoint-sg"
             ingress:
               - ipProtocol: tcp
                 fromPort: 5432
@@ -164,7 +164,7 @@ spec:
                   - cidrIp: "10.0.0.0/8"
       patches:
         - type: PatchSet
-          patchSetName: common-fields
+          patchSetName: common-resource-fields
         - fromFieldPath: "metadata.uid"
           toFieldPath: "spec.forProvider.groupName"
           transforms:
