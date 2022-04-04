@@ -20,112 +20,188 @@ spec:
           policy:
             mergeOptions:
               keepMapValues: true
+    - name: common-resource-fields
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.deletionPolicy
+          toFieldPath: spec.deletionPolicy
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.tags
+          toFieldPath: spec.forProvider.tags
+          policy:
+            mergeOptions:
+              appendSlice: true
+        - fromFieldPath: spec.writeConnectionSecretToRef.namespace
+          toFieldPath: spec.writeConnectionSecretToRef.namespace
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.name
+          toFieldPath: metadata.annotations[crossplane.io/external-name]
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
   resources:
-    - name: dynamodb-table
-      connectionDetails:
-        - name: tableName
-          fromConnectionSecretKey: tableName
-        - name: tableArn
-          fromConnectionSecretKey: tableArn
-        - name: region
-          fromConnectionSecretKey: region
+    # - name: dynamodb-table
+    #   connectionDetails:
+    #     - name: tableName
+    #       fromConnectionSecretKey: tableName
+    #     - name: tableArn
+    #       fromConnectionSecretKey: tableArn
+    #     - name: region
+    #       fromConnectionSecretKey: region
+    #   base:
+    #     apiVersion: awsblueprints.io/v1alpha1
+    #     kind: XDynamoDBTable
+    #     spec:
+    #       compositionSelector:
+    #         matchLabels:
+    #           awsblueprints.io/provider: aws
+    #           awsblueprints.io/environment: dev
+    #           dynamodb.awsblueprints.io/capacity: on-demand
+    #           dynamodb.awsblueprints.io/pkType: partition
+    #       tableIndex:
+    #         hashKeyName: id
+    #         hashKeyType: S
+    #       resourceConfig:
+    #         tags:
+    #           - key: env
+    #             value: dev
+    #   patches:
+    #     - type: PatchSet
+    #       patchSetName: common-fields
+    #     - type: ToCompositeFieldPath
+    #       fromFieldPath: status.tableARN
+    #       toFieldPath: status.tableArn
+    #     - type: ToCompositeFieldPath
+    #       fromFieldPath: spec.tableSpec.hashKeyName
+    #       toFieldPath: spec.tableIndex.hashKeyName
+    #     - type: ToCompositeFieldPath
+    #       fromFieldPath: spec.tableSpec.hashKeyType
+    #       toFieldPath: spec.tableIndex.hashKeyType
+    # - name: read-policy
+    #   base:
+    #     apiVersion: awsblueprints.io/v1alpha1
+    #     kind: IAMPolicy
+    #     spec:
+    #       resourceConfig:
+    #         tags:
+    #           - key: env
+    #             value: dev
+    #       compositionSelector:
+    #         matchLabels:
+    #           awsblueprints.io/provider: aws
+    #           awsblueprints.io/environment: dev
+    #           iam.awsblueprints.io/policy-type: read
+    #           iam.awsblueprints.io/service: dynamodb-table
+    #       resourceArn: ""
+    #   patches:
+    #     - type: PatchSet
+    #       patchSetName: common-fields
+    #     - type: ToCompositeFieldPath
+    #       fromFieldPath: status.policyArn
+    #       toFieldPath: status.readPolicyArn
+    #     - fromFieldPath: status.tableArn
+    #       toFieldPath: spec.resourceArn
+    # - name: write-policy
+    #   base:
+    #     apiVersion: awsblueprints.io/v1alpha1
+    #     kind: IAMPolicy
+    #     spec:
+    #       resourceConfig:
+    #         tags:
+    #           - key: env
+    #             value: dev
+    #       compositionSelector:
+    #         matchLabels:
+    #           awsblueprints.io/provider: aws
+    #           awsblueprints.io/environment: dev
+    #           iam.awsblueprints.io/policy-type: write
+    #           iam.awsblueprints.io/service: dynamodb-table
+    #       resourceArn: ""
+    #   patches:
+    #     - type: PatchSet
+    #       patchSetName: common-fields
+    #     - type: ToCompositeFieldPath
+    #       fromFieldPath: status.policyArn
+    #       toFieldPath: status.writePolicyArn
+    #     - fromFieldPath: status.tableArn
+    #       toFieldPath: spec.resourceArn
+    # - name: lambda
+    #   base: 
+    #     apiVersion: awsblueprints.io/v1alpha1
+    #     kind: XLambdaFunction
+    #     spec:
+    #       compositionSelector:
+    #         matchLabels:
+    #           awsblueprints.io/provider: aws-jet
+    #           awsblueprints.io/environment: dev
+    #   patches:
+    #     - type: PatchSet
+    #       patchSetName: common-fields
+    #     - type: ToCompositeFieldPath
+    #       fromFieldPath: status.functionRoleArn
+    #       toFieldPath: status.lambdaRoleArn
+    #     - type: FromCompositeFieldPath
+    #       fromFieldPath: spec.permissionsBoundaryArn
+    #       toFieldPath: spec.permissionsBoundaryArn
+    #     - type: FromCompositeFieldPath
+    #       fromFieldPath: spec.imageUri
+    #       toFieldPath: spec.imageUri
+    - name: api-gateway-vpc-endpoint-sg
       base:
-        apiVersion: awsblueprints.io/v1alpha1
-        kind: XDynamoDBTable
+        apiVersion: ec2.aws.crossplane.io/v1beta1
+        kind: SecurityGroup
         spec:
-          compositionSelector:
-            matchLabels:
-              awsblueprints.io/provider: aws
-              awsblueprints.io/environment: dev
-              dynamodb.awsblueprints.io/capacity: on-demand
-              dynamodb.awsblueprints.io/pkType: partition
-          tableIndex:
-            hashKeyName: id
-            hashKeyType: S
-          resourceConfig:
-            tags:
-              - key: env
-                value: dev
+          forProvider:
+            description: "rds-postgres-sg"
+            ingress:
+              - ipProtocol: tcp
+                fromPort: 5432
+                toPort: 5432
+                ipRanges:
+                  - cidrIp: "10.0.0.0/8"
       patches:
         - type: PatchSet
           patchSetName: common-fields
-        - type: ToCompositeFieldPath
-          fromFieldPath: status.tableARN
-          toFieldPath: status.tableArn
-        - type: ToCompositeFieldPath
-          fromFieldPath: spec.tableSpec.hashKeyName
-          toFieldPath: spec.tableIndex.hashKeyName
-        - type: ToCompositeFieldPath
-          fromFieldPath: spec.tableSpec.hashKeyType
-          toFieldPath: spec.tableIndex.hashKeyType
-    - name: read-policy
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.forProvider.groupName"
+          transforms:
+            - type: string
+              string:
+                fmt: "api-gateway-endpoint-sg-%s"
+        - fromFieldPath: "spec.vpcId"
+          toFieldPath: "spec.forProvider.vpcId"
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-db-sg"
+    - name: api-gateway-vpc-endpoint
       base:
-        apiVersion: awsblueprints.io/v1alpha1
-        kind: IAMPolicy
+        apiVersion: ec2.aws.crossplane.io/v1alpha1
+        kind: VPCEndpoint
         spec:
-          resourceConfig:
-            tags:
-              - key: env
-                value: dev
-          compositionSelector:
-            matchLabels:
-              awsblueprints.io/provider: aws
-              awsblueprints.io/environment: dev
-              iam.awsblueprints.io/policy-type: read
-              iam.awsblueprints.io/service: dynamodb-table
-          resourceArn: ""
+          forProvider:
+            serviceName: "com.amazonaws.us-west-2.execute-api"
+            privateDNSEnabled: true
+            vpcEndpointType: Interface
+            securityGroupIds: [] 
+            securityGroupIdSelector:
+              matchControllerRef: true
       patches:
         - type: PatchSet
-          patchSetName: common-fields
-        - type: ToCompositeFieldPath
-          fromFieldPath: status.policyArn
-          toFieldPath: status.readPolicyArn
-        - fromFieldPath: status.tableArn
-          toFieldPath: spec.resourceArn
-    - name: write-policy
-      base:
-        apiVersion: awsblueprints.io/v1alpha1
-        kind: IAMPolicy
-        spec:
-          resourceConfig:
-            tags:
-              - key: env
-                value: dev
-          compositionSelector:
-            matchLabels:
-              awsblueprints.io/provider: aws
-              awsblueprints.io/environment: dev
-              iam.awsblueprints.io/policy-type: write
-              iam.awsblueprints.io/service: dynamodb-table
-          resourceArn: ""
-      patches:
-        - type: PatchSet
-          patchSetName: common-fields
-        - type: ToCompositeFieldPath
-          fromFieldPath: status.policyArn
-          toFieldPath: status.writePolicyArn
-        - fromFieldPath: status.tableArn
-          toFieldPath: spec.resourceArn
-    - name: lambda
-      base: 
-        apiVersion: awsblueprints.io/v1alpha1
-        kind: XLambdaFunction
-        metadata:
-          name: test-container-lambda
-        spec:
-          compositionSelector:
-            matchLabels:
-              awsblueprints.io/provider: aws-jet
-              awsblueprints.io/environment: dev
-      patches:
-        - type: PatchSet
-          patchSetName: common-fields
-        - type: ToCompositeFieldPath
-          fromFieldPath: status.functionRoleArn
-          toFieldPath: status.lambdaRoleArn
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.permissionsBoundaryArn
-          toFieldPath: spec.permissionsBoundaryArn
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.imageUri
-          toFieldPath: spec.imageUri
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-execute-endpoint"
+        - fromFieldPath: "spec.vpcId"
+          toFieldPath: "spec.forProvider.vpcId"
+        - fromFieldPath: "spec.subnetIds"
+          toFieldPath: "spec.forProvider.subnetIds"
+          

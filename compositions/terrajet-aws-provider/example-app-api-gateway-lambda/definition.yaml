@@ -30,6 +30,13 @@ spec:
                   type: string
                 imageUri:
                   type: string
+                vpcId:
+                  type: string
+                subnetIds:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
                 resourceConfig:
                   description: ResourceConfig defines general properties of this AWS
                     resource.

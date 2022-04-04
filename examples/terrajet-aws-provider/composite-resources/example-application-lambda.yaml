@@ -18,3 +18,4 @@ spec:
   tableSpec:
     hashKeyName: id
     hashKeyType: S
+  vpcId: vpc-0c0e996b5de4aff5e
