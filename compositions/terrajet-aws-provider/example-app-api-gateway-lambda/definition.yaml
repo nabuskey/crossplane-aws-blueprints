@@ -74,17 +74,36 @@ spec:
               - permissionsBoundaryArn
               - resourceConfig
               - tableSpec
+              - accountId
+              - vpcId
+              - subnetIds
               type: object
             status:
               description: ApplicationStatus defines the observed state of Application
               properties:
                 lambdaRoleArn:
                   type: string
+                lambdaFunctionArn:
+                  type: string
+                lambdaFunctionName:
+                  type: string
                 readPolicyArn:
                   type: string
                 tableArn:
                   type: string
                 writePolicyArn:
+                  type: string
+                vpcEndpoint:
+                  type: string
+                apiGatewayId:
+                  type: string
+                apiGatewayRootId:
+                  type: string
+                apiGatewayArn:
+                  type: string
+                apiGatewayExecutionArn:
+                  type: string
+                apiGatewayDeploymentId:
                   type: string
               type: object
           type: object

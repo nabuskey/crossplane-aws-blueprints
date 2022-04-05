@@ -43,112 +43,118 @@ spec:
           fromFieldPath: spec.resourceConfig.providerConfigName
           toFieldPath: spec.providerConfigRef.name
   resources:
-    # - name: dynamodb-table
-    #   connectionDetails:
-    #     - name: tableName
-    #       fromConnectionSecretKey: tableName
-    #     - name: tableArn
-    #       fromConnectionSecretKey: tableArn
-    #     - name: region
-    #       fromConnectionSecretKey: region
-    #   base:
-    #     apiVersion: awsblueprints.io/v1alpha1
-    #     kind: XDynamoDBTable
-    #     spec:
-    #       compositionSelector:
-    #         matchLabels:
-    #           awsblueprints.io/provider: aws
-    #           awsblueprints.io/environment: dev
-    #           dynamodb.awsblueprints.io/capacity: on-demand
-    #           dynamodb.awsblueprints.io/pkType: partition
-    #       tableIndex:
-    #         hashKeyName: id
-    #         hashKeyType: S
-    #       resourceConfig:
-    #         tags:
-    #           - key: env
-    #             value: dev
-    #   patches:
-    #     - type: PatchSet
-    #       patchSetName: common-fields
-    #     - type: ToCompositeFieldPath
-    #       fromFieldPath: status.tableARN
-    #       toFieldPath: status.tableArn
-    #     - type: ToCompositeFieldPath
-    #       fromFieldPath: spec.tableSpec.hashKeyName
-    #       toFieldPath: spec.tableIndex.hashKeyName
-    #     - type: ToCompositeFieldPath
-    #       fromFieldPath: spec.tableSpec.hashKeyType
-    #       toFieldPath: spec.tableIndex.hashKeyType
-    # - name: read-policy
-    #   base:
-    #     apiVersion: awsblueprints.io/v1alpha1
-    #     kind: IAMPolicy
-    #     spec:
-    #       resourceConfig:
-    #         tags:
-    #           - key: env
-    #             value: dev
-    #       compositionSelector:
-    #         matchLabels:
-    #           awsblueprints.io/provider: aws
-    #           awsblueprints.io/environment: dev
-    #           iam.awsblueprints.io/policy-type: read
-    #           iam.awsblueprints.io/service: dynamodb-table
-    #       resourceArn: ""
-    #   patches:
-    #     - type: PatchSet
-    #       patchSetName: common-fields
-    #     - type: ToCompositeFieldPath
-    #       fromFieldPath: status.policyArn
-    #       toFieldPath: status.readPolicyArn
-    #     - fromFieldPath: status.tableArn
-    #       toFieldPath: spec.resourceArn
-    # - name: write-policy
-    #   base:
-    #     apiVersion: awsblueprints.io/v1alpha1
-    #     kind: IAMPolicy
-    #     spec:
-    #       resourceConfig:
-    #         tags:
-    #           - key: env
-    #             value: dev
-    #       compositionSelector:
-    #         matchLabels:
-    #           awsblueprints.io/provider: aws
-    #           awsblueprints.io/environment: dev
-    #           iam.awsblueprints.io/policy-type: write
-    #           iam.awsblueprints.io/service: dynamodb-table
-    #       resourceArn: ""
-    #   patches:
-    #     - type: PatchSet
-    #       patchSetName: common-fields
-    #     - type: ToCompositeFieldPath
-    #       fromFieldPath: status.policyArn
-    #       toFieldPath: status.writePolicyArn
-    #     - fromFieldPath: status.tableArn
-    #       toFieldPath: spec.resourceArn
-    # - name: lambda
-    #   base: 
-    #     apiVersion: awsblueprints.io/v1alpha1
-    #     kind: XLambdaFunction
-    #     spec:
-    #       compositionSelector:
-    #         matchLabels:
-    #           awsblueprints.io/provider: aws-jet
-    #           awsblueprints.io/environment: dev
-    #   patches:
-    #     - type: PatchSet
-    #       patchSetName: common-fields
-    #     - type: ToCompositeFieldPath
-    #       fromFieldPath: status.functionRoleArn
-    #       toFieldPath: status.lambdaRoleArn
-    #     - type: FromCompositeFieldPath
-    #       fromFieldPath: spec.permissionsBoundaryArn
-    #       toFieldPath: spec.permissionsBoundaryArn
-    #     - type: FromCompositeFieldPath
-    #       fromFieldPath: spec.imageUri
-    #       toFieldPath: spec.imageUri
+    - name: dynamodb-table
+      connectionDetails:
+        - name: tableName
+          fromConnectionSecretKey: tableName
+        - name: tableArn
+          fromConnectionSecretKey: tableArn
+        - name: region
+          fromConnectionSecretKey: region
+      base:
+        apiVersion: awsblueprints.io/v1alpha1
+        kind: XDynamoDBTable
+        spec:
+          compositionSelector:
+            matchLabels:
+              awsblueprints.io/provider: aws
+              awsblueprints.io/environment: dev
+              dynamodb.awsblueprints.io/capacity: on-demand
+              dynamodb.awsblueprints.io/pkType: partition
+          tableIndex:
+            hashKeyName: id
+            hashKeyType: S
+          resourceConfig:
+            tags:
+              - key: env
+                value: dev
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.tableARN
+          toFieldPath: status.tableArn
+        - type: ToCompositeFieldPath
+          fromFieldPath: spec.tableSpec.hashKeyName
+          toFieldPath: spec.tableIndex.hashKeyName
+        - type: ToCompositeFieldPath
+          fromFieldPath: spec.tableSpec.hashKeyType
+          toFieldPath: spec.tableIndex.hashKeyType
+    - name: read-policy
+      base:
+        apiVersion: awsblueprints.io/v1alpha1
+        kind: IAMPolicy
+        spec:
+          resourceConfig:
+            tags:
+              - key: env
+                value: dev
+          compositionSelector:
+            matchLabels:
+              awsblueprints.io/provider: aws
+              awsblueprints.io/environment: dev
+              iam.awsblueprints.io/policy-type: read
+              iam.awsblueprints.io/service: dynamodb-table
+          resourceArn: ""
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.policyArn
+          toFieldPath: status.readPolicyArn
+        - fromFieldPath: status.tableArn
+          toFieldPath: spec.resourceArn
+    - name: write-policy
+      base:
+        apiVersion: awsblueprints.io/v1alpha1
+        kind: IAMPolicy
+        spec:
+          resourceConfig:
+            tags:
+              - key: env
+                value: dev
+          compositionSelector:
+            matchLabels:
+              awsblueprints.io/provider: aws
+              awsblueprints.io/environment: dev
+              iam.awsblueprints.io/policy-type: write
+              iam.awsblueprints.io/service: dynamodb-table
+          resourceArn: ""
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.policyArn
+          toFieldPath: status.writePolicyArn
+        - fromFieldPath: status.tableArn
+          toFieldPath: spec.resourceArn
+    - name: lambda
+      base: 
+        apiVersion: awsblueprints.io/v1alpha1
+        kind: XLambdaFunction
+        spec:
+          compositionSelector:
+            matchLabels:
+              awsblueprints.io/provider: aws-jet
+              awsblueprints.io/environment: dev
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.functionRoleArn
+          toFieldPath: status.lambdaRoleArn
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.functionName
+          toFieldPath: status.lambdaFunctionName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.functionArn
+          toFieldPath: status.lambdaFunctionArn
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.permissionsBoundaryArn
+          toFieldPath: spec.permissionsBoundaryArn
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.imageUri
+          toFieldPath: spec.imageUri
     - name: api-gateway-vpc-endpoint-sg
       base:
         apiVersion: ec2.aws.crossplane.io/v1beta1
@@ -158,8 +164,8 @@ spec:
             description: "api-gateway-vpc-endpoint-sg"
             ingress:
               - ipProtocol: tcp
-                fromPort: 5432
-                toPort: 5432
+                fromPort: 443
+                toPort: 443
                 ipRanges:
                   - cidrIp: "10.0.0.0/8"
       patches:
@@ -204,4 +210,310 @@ spec:
           toFieldPath: "spec.forProvider.vpcId"
         - fromFieldPath: "spec.subnetIds"
           toFieldPath: "spec.forProvider.subnetIds"
-          
+        - type: ToCompositeFieldPath
+          fromFieldPath: metadata.annotations[crossplane.io/external-name]
+          toFieldPath: status.vpcEndpoint
+    - name: api-gateway
+      base:
+        apiVersion: apigateway.aws.jet.crossplane.io/v1alpha1
+        kind: RestAPI
+        spec:
+          forProvider:
+            endpointConfiguration:
+            - types:
+                - PRIVATE
+              vpcEndpointIds:
+                - ""
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-api-gateway"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.vpcEndpoint
+          toFieldPath: spec.forProvider.endpointConfiguration[0].vpcEndpointIds[0]
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.uid
+          toFieldPath: spec.forProvider.name
+          transforms:
+            - type: string
+              string:
+                fmt: "example-api-%s"
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.arn
+          toFieldPath: status.apiGatewayArn
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.apiGatewayId
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.executionArn
+          toFieldPath: status.apiGatewayExecutionArn
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.rootResourceId
+          toFieldPath: status.apiGatewayRootId
+    - name: api-gateway-root-get
+      base:
+        apiVersion: apigateway.aws.jet.crossplane.io/v1alpha1
+        kind: Integration
+        spec:
+          forProvider:
+            httpMethod: GET
+            integrationHttpMethod: POST
+            type: AWS_PROXY
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-root-get-integration"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayRootId
+          toFieldPath: spec.forProvider.resourceId
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayId
+          toFieldPath: spec.forProvider.restApiId
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.uri
+          combine:
+            variables:
+            - fromFieldPath: spec.resourceConfig.region
+            - fromFieldPath: status.lambdaFunctionArn
+            strategy: string
+            string:
+              fmt: |-
+                arn:aws:apigateway:%s:lambda:path/2015-03-31/functions/%s/invocations
+    - name: api-gateway-root-get-method
+      base:
+        apiVersion: apigateway.aws.jet.crossplane.io/v1alpha1
+        kind: Method
+        spec:
+          forProvider:
+            authorization: NONE
+            httpMethod: GET
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-root-get-method"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayRootId
+          toFieldPath: spec.forProvider.resourceId
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayId
+          toFieldPath: spec.forProvider.restApiId
+    - name: api-gateway-lambda-invocation-permission
+      base:
+        apiVersion: lambda.aws.jet.crossplane.io/v1alpha1
+        kind: Permission
+        spec:
+          forProvider:
+            action: lambda:InvokeFunction
+            principal: apigateway.amazonaws.com
+            functionName: dummy
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-lambda-permission"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.lambdaFunctionName
+          toFieldPath: spec.forProvider.functionName
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.sourceArn
+          combine:
+            variables:
+            - fromFieldPath: spec.resourceConfig.region
+            - fromFieldPath: spec.accountId
+            - fromFieldPath: status.apiGatewayId
+            strategy: string
+            string:
+              fmt: |-
+                arn:aws:execute-api:%s:%s:%s/*/*
+    - name: api-gateway-root-post
+      base:
+        apiVersion: apigateway.aws.jet.crossplane.io/v1alpha1
+        kind: Integration
+        spec:
+          forProvider:
+            httpMethod: POST
+            integrationHttpMethod: POST
+            type: AWS_PROXY
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-root-post-integration"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayRootId
+          toFieldPath: spec.forProvider.resourceId
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayId
+          toFieldPath: spec.forProvider.restApiId
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.uri
+          combine:
+            variables:
+            - fromFieldPath: spec.resourceConfig.region
+            - fromFieldPath: status.lambdaFunctionArn
+            strategy: string
+            string:
+              fmt: |-
+                arn:aws:apigateway:%s:lambda:path/2015-03-31/functions/%s/invocations
+    - name: api-gateway-root-post-method
+      base:
+        apiVersion: apigateway.aws.jet.crossplane.io/v1alpha1
+        kind: Method
+        spec:
+          forProvider:
+            authorization: NONE
+            httpMethod: POST
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-root-post-method"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayRootId
+          toFieldPath: spec.forProvider.resourceId
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayId
+          toFieldPath: spec.forProvider.restApiId
+    - name: api-gateway-deployment
+      base:
+        apiVersion: apigateway.aws.jet.crossplane.io/v1alpha1
+        kind: Deployment
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-deployment"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayId
+          toFieldPath: spec.forProvider.restApiId
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.apiGatewayDeploymentId
+    - name: api-gateway-stage
+      base:
+        apiVersion: apigateway.aws.jet.crossplane.io/v1alpha1
+        kind: Stage
+        spec:
+          forProvider:
+            stageName: dev
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-stage"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayId
+          toFieldPath: spec.forProvider.restApiId
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayDeploymentId
+          toFieldPath: spec.forProvider.deploymentId
+    - name: api-gateway-resource-policy
+      base:
+        apiVersion: apigateway.aws.jet.crossplane.io/v1alpha1
+        kind: RestAPIPolicy
+      patches:
+        - type: PatchSet
+          patchSetName: common-resource-fields
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-policy"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.jetProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.apiGatewayId
+          toFieldPath: spec.forProvider.restApiId
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.policy
+          combine:
+            variables:
+            - fromFieldPath: status.apiGatewayExecutionArn
+            - fromFieldPath: status.apiGatewayExecutionArn
+            - fromFieldPath: spec.vpcId
+            strategy: string
+            string:
+              fmt: |
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": "*",
+                      "Action": "execute-api:Invoke",
+                      "Resource": "%s/*"
+                    },
+                    {
+                      "Effect": "Deny",
+                      "Principal": "*",
+                      "Action": "execute-api:Invoke",
+                      "Resource": "%s/*",
+                      "Condition": {
+                          "StringNotEquals": {
+                              "aws:SourceVpc": "%s"
+                          }
+                      }
+                    }
+                  ]
+                }
