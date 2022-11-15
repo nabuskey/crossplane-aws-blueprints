@@ -1,0 +1,80 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: ecs-cluster-fargate.awsblueprints.io
+  labels:
+    awsblueprints.io/environment: dev
+    ecs.awsblueprints.io/type: cluster-fargate
+spec:
+  publishConnectionDetailsWithStoreConfigRef:
+    name: default
+  compositeTypeRef:
+    apiVersion: awsblueprints.io/v1alpha1
+    kind: XECS
+  patchSets:
+    - name: common-fields
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.deletionPolicy
+          toFieldPath: spec.deletionPolicy
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.tags
+          toFieldPath: spec.forProvider.tags
+          policy:
+            mergeOptions:
+              keepMapValues: true
+  resources:
+    - name: cluster
+      connectionDetails:
+        - name: region
+          fromFieldPath: spec.forProvider.region
+        - name: cluster-name
+          fromFieldPath: metadata.annotations[crossplane.io/external-name]
+      base:
+        apiVersion: ecs.aws.upbound.io/v1beta1
+        kind: Cluster
+        spec:
+          forProvider:
+            tags:
+              created-by: crossplane-upbound-aws-provider
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.arn
+          toFieldPath: status.clusterArn
+    - name: capacity-provider
+      base:
+        apiVersion: ecs.aws.upbound.io/v1beta1
+        kind: ClusterCapacityProviders
+        spec:
+          forProvider:
+            capacityProviders:
+              - FARGATE
+            clusterNameSelector:
+              matchControllerRef: true
+            defaultCapacityProviderStrategy:
+              - base: 1
+                capacityProvider: FARGATE
+                weight: 100
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+
+
+      
+
+    
+

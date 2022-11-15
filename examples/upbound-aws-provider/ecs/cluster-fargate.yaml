@@ -1,0 +1,21 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: awsblueprints.io/v1alpha1
+kind: ECS
+metadata:
+  name: test-ecs
+  namespace: default
+spec:
+  compositionSelector:
+    matchLabels:
+      awsblueprints.io/environment: dev
+      ecs.awsblueprints.io/type: cluster-fargate
+  publishConnectionDetailsTo:
+    name: ecs-info
+  resourceConfig:
+    providerConfigName: aws-provider-config
+    region: us-west-2
+    tags:
+      test1: value1
+      test2: value2
