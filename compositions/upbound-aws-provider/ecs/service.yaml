@@ -4,10 +4,10 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: ecs-cluster-fargate.awsblueprints.io
+  name: ecs-service.awsblueprints.io
   labels:
     awsblueprints.io/environment: dev
-    ecs.awsblueprints.io/type: cluster-fargate
+    ecs.awsblueprints.io/type: service
 spec:
   publishConnectionDetailsWithStoreConfigRef:
     name: default
@@ -33,7 +33,30 @@ spec:
             mergeOptions:
               keepMapValues: true
   resources:
-    - name: cluster
+    - name: task-definition
+      base:
+        apiVersion: ecs.aws.upbound.io/v1beta1
+        kind: TaskDefinition
+        metadata:
+          name: sample-task
+        spec:
+          forProvider:
+            containerDefinitions: |-
+              [
+                {
+                  "name": "first",
+                  "image": "service-first",
+                  "cpu": 10,
+                  "memory": 512,
+                  "essential":true
+                }
+              ]
+            family: sampleservice
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+
+    - name: service
       connectionDetails:
         - name: region
           fromFieldPath: spec.forProvider.region
@@ -41,15 +64,23 @@ spec:
           fromFieldPath: metadata.annotations[crossplane.io/external-name]
       base:
         apiVersion: ecs.aws.upbound.io/v1beta1
-        kind: Cluster
+        kind: Service
         metadata:
-          labels:
-            ecs.awsblueprints.io/cluster-type: fargate
-            awsblueprints.io/environment: dev
+          annotations:
+            upjet.upbound.io/manual-intervention: This resource requires manual intervention
+              for adding task definition revision. Otherwise, resource will be updated
+              to use latest revision.
+          name: sample-service
         spec:
           forProvider:
-            tags:
-              created-by: crossplane-upbound-aws-provider
+            clusterSelector:
+              matchLabels:
+                ecs.awsblueprints.io/cluster-type: fargate
+                awsblueprints.io/environment: dev
+            launchType: FARGATE
+            propagateTags: TASK_DEFINITION
+            region: us-west-1
+            taskDefinition: sampleservice
       patches:
         - type: PatchSet
           patchSetName: common-fields
