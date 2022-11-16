@@ -41,13 +41,13 @@ spec:
           name: sample-task
         spec:
           forProvider:
+            cpu: "512"
+            memory: "2"
             containerDefinitions: |-
               [
                 {
-                  "name": "first",
-                  "image": "service-first",
-                  "cpu": 10,
-                  "memory": 512,
+                  "name": "",
+                  "image": "",
                   "essential":true
                 }
               ]
@@ -55,6 +55,26 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-fields
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.size
+          toFieldPath: spec.forProvider.cpu
+          transforms:
+            - type: map
+              map:
+                XS: "256"
+                S: "512"
+                M: "1024"
+                L: "2048"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.size
+          toFieldPath: spec.forProvider.cpu
+          transforms:
+            - type: map
+              map:
+                XS: "1"
+                S: "2"
+                M: "4"
+                L: "8"
 
     - name: service
       connectionDetails:
