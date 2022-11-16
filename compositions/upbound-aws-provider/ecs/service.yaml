@@ -33,6 +33,43 @@ spec:
             mergeOptions:
               keepMapValues: true
   resources:
+    - name: execution-role
+      base:
+        apiVersion: iam.aws.upbound.io/v1beta1
+        kind: Role
+        spec:
+          forProvider:
+            assumeRolePolicy: |
+              {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "ecs-tasks.amazonaws.com"
+                    },
+                    "Action": "sts:AssumeRole"
+                  }
+                ]
+              }
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.permissionBoundaryArn
+          toFieldPath: spec.forProvider.permissionsBoundary
+    - name: execution-policy-attachment
+      base:
+        apiVersion: iam.aws.upbound.io/v1beta1
+        kind: RolePolicyAttachment
+        spec:
+          forProvider:
+            policyArn: arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+            roleSelector:
+              matchControllerRef: true
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
     - name: task-definition
       base:
         apiVersion: ecs.aws.upbound.io/v1beta1
@@ -41,20 +78,22 @@ spec:
           name: sample-task
         spec:
           forProvider:
-            cpu: "512"
-            memory: "2"
-            containerDefinitions: |-
-              [
-                {
-                  "name": "",
-                  "image": "",
-                  "essential":true
-                }
-              ]
-            family: sampleservice
+            family: default
+            executionRoleArnSelector:
+              matchControllerRef: true
       patches:
         - type: PatchSet
           patchSetName: common-fields
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.size
+          toFieldPath: spec.forProvider.memory
+          transforms:
+            - type: map
+              map:
+                XS: "512"
+                S: "1024"
+                M: "2048"
+                L: "4096"
         - type: FromCompositeFieldPath
           fromFieldPath: spec.size
           toFieldPath: spec.forProvider.cpu
@@ -65,71 +104,78 @@ spec:
                 S: "512"
                 M: "1024"
                 L: "2048"
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.size
-          toFieldPath: spec.forProvider.cpu
-          transforms:
-            - type: map
-              map:
-                XS: "1"
-                S: "2"
-                M: "4"
-                L: "8"
+        - fromFieldPath: metadata.labels[awsblueprints.io/application]
+          toFieldPath: spec.forProvider.family
+          policy:
+            fromFieldPath: Required
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.containerDefinitions
+          policy:
+              fromFieldPath: Required
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels[crossplane.io/claim-name]
+              - fromFieldPath: spec.containerImage
+            strategy: string
+            string:
+              fmt: |
+                  [
+                    {
+                      "name": "%s",
+                      "image": "%s",
+                      "essential":true
+                    }
+                  ]
 
-    - name: service
-      connectionDetails:
-        - name: region
-          fromFieldPath: spec.forProvider.region
-        - name: cluster-name
-          fromFieldPath: metadata.annotations[crossplane.io/external-name]
-      base:
-        apiVersion: ecs.aws.upbound.io/v1beta1
-        kind: Service
-        metadata:
-          annotations:
-            upjet.upbound.io/manual-intervention: This resource requires manual intervention
-              for adding task definition revision. Otherwise, resource will be updated
-              to use latest revision.
-          name: sample-service
-        spec:
-          forProvider:
-            clusterSelector:
-              matchLabels:
-                ecs.awsblueprints.io/cluster-type: fargate
-                awsblueprints.io/environment: dev
-            launchType: FARGATE
-            propagateTags: TASK_DEFINITION
-            region: us-west-1
-            taskDefinition: sampleservice
-      patches:
-        - type: PatchSet
-          patchSetName: common-fields
-        - type: FromCompositeFieldPath
-          fromFieldPath: metadata.labels[crossplane.io/claim-name]
-          toFieldPath: metadata.name
-        - type: ToCompositeFieldPath
-          fromFieldPath: status.atProvider.arn
-          toFieldPath: status.clusterArn
-    - name: capacity-provider
-      base:
-        apiVersion: ecs.aws.upbound.io/v1beta1
-        kind: ClusterCapacityProviders
-        spec:
-          forProvider:
-            capacityProviders:
-              - FARGATE
-            clusterNameSelector:
-              matchControllerRef: true
-            defaultCapacityProviderStrategy:
-              - base: 1
-                capacityProvider: FARGATE
-                weight: 100
-      patches:
-        - type: PatchSet
-          patchSetName: common-fields
-
-
-      
-
-    
+    # - name: service
+    #   connectionDetails:
+    #     - name: region
+    #       fromFieldPath: spec.forProvider.region
+    #     - name: cluster-name
+    #       fromFieldPath: metadata.annotations[crossplane.io/external-name]
+    #   base:
+    #     apiVersion: ecs.aws.upbound.io/v1beta1
+    #     kind: Service
+    #     metadata:
+    #       annotations:
+    #         upjet.upbound.io/manual-intervention: This resource requires manual intervention
+    #           for adding task definition revision. Otherwise, resource will be updated
+    #           to use latest revision.
+    #       name: sample-service
+    #     spec:
+    #       forProvider:
+    #         clusterSelector:
+    #           matchLabels:
+    #             ecs.awsblueprints.io/cluster-type: fargate
+    #             awsblueprints.io/environment: dev
+    #         launchType: FARGATE
+    #         propagateTags: TASK_DEFINITION
+    #         region: us-west-1
+    #         taskDefinition: sampleservice
+    #   patches:
+    #     - type: PatchSet
+    #       patchSetName: common-fields
+    #     - type: FromCompositeFieldPath
+    #       fromFieldPath: metadata.labels[crossplane.io/claim-name]
+    #       toFieldPath: metadata.name
+    #     - type: ToCompositeFieldPath
+    #       fromFieldPath: status.atProvider.arn
+    #       toFieldPath: status.clusterArn
+    # - name: capacity-provider
+    #   base:
+    #     apiVersion: ecs.aws.upbound.io/v1beta1
+    #     kind: ClusterCapacityProviders
+    #     spec:
+    #       forProvider:
+    #         capacityProviders:
+    #           - FARGATE
+    #         clusterNameSelector:
+    #           matchControllerRef: true
+    #         defaultCapacityProviderStrategy:
+    #           - base: 1
+    #             capacityProvider: FARGATE
+    #             weight: 100
+    #   patches:
+    #     - type: PatchSet
+    #       patchSetName: common-fields
 

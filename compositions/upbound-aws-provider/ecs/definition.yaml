@@ -51,11 +51,15 @@ spec:
                   - providerConfigName
                   - region
                   type: object
-                # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
                 size:
                   type: string
                   enum: [XS, S, M, L]
                   default: S
+                permissionBoundaryArn:
+                  type: string
+                containerImage:
+                  description: This is required for services. Currently only one container per service is supported.
+                  type: string
               required:
               - resourceConfig
               type: object

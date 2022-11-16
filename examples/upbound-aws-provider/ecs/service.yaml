@@ -4,7 +4,7 @@
 apiVersion: awsblueprints.io/v1alpha1
 kind: ECS
 metadata:
-  name: test-ecs
+  name: test-ecs-service
   namespace: default
   labels:
     awsblueprints.io/application: my-application
@@ -12,9 +12,12 @@ spec:
   compositionSelector:
     matchLabels:
       awsblueprints.io/environment: dev
-      ecs.awsblueprints.io/type: cluster-fargate
+      ecs.awsblueprints.io/type: service
+  containerImage: "me"
+  permissionBoundaryArn: arn:aws:iam::833162080385:policy/crossplaneBoundary
+  size: XS
   publishConnectionDetailsTo:
-    name: ecs-info
+    name: ecs-service
   resourceConfig:
     providerConfigName: aws-provider-config
     region: us-west-2
