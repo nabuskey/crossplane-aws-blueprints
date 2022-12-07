@@ -1,0 +1,17 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: awsblueprints.io/v1alpha1
+kind: EMRContainer
+metadata:
+  name: test-virtual-cluster
+  namespace: test1
+spec:
+  compositionSelector:
+    matchLabels:
+      awsblueprints.io/environment: dev
+      awsblueprints.io/type: virtual-cluster
+  resourceConfig:
+    providerConfigName: aws-provider-config
+    region: us-west-2
+  eksClusterName: crossplane-argo-vault-2
