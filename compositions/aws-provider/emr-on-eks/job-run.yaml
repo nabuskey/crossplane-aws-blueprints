@@ -1,0 +1,144 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: job-run.emr-containers.awsblueprints.io
+  labels:
+    awsblueprints.io/environment: dev
+    awsblueprints.io/type: job-run
+spec:
+  publishConnectionDetailsWithStoreConfigRef:
+    name: default
+  compositeTypeRef:
+    apiVersion: awsblueprints.io/v1alpha1
+    kind: XEMRContainer
+  patchSets:
+    - name: common-fields-composition
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig
+          toFieldPath: spec.resourceConfig
+    - name: common-fields
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.deletionPolicy
+          toFieldPath: spec.deletionPolicy
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.region
+          toFieldPath: spec.forProvider.region
+  resources:
+    - name: irsa-role-only
+      base:
+        apiVersion: awsblueprints.io/v1alpha1
+        kind: XIRSA
+        spec:
+          compositionSelector:
+            matchLabels:
+              awsblueprints.io/environment: dev
+              awsblueprints.io/type: role-only
+          awsAccountID: ""
+          eksOIDC: ""
+          permissionsBoundaryArn: ""
+          serviceAccountName: emr-containers*
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields-composition
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.accountId
+          toFieldPath: spec.awsAccountID
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.eksOIDC
+          toFieldPath: spec.eksOIDC
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.permissionsBoundaryArn
+          toFieldPath: spec.permissionsBoundaryArn
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.roleName
+          toFieldPath: status.roleName
+    - name: read-policy
+      base:
+        apiVersion: awsblueprints.io/v1alpha1
+        kind: IAMPolicy
+        spec:
+          compositionSelector:
+            matchLabels:
+              iam.awsblueprints.io/policy-type: read
+              iam.awsblueprints.io/service: s3-bucket
+              iam.awsblueprints.io/attach-policy: "true"
+          resourceArn: ""
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields-composition
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.policyArn
+          toFieldPath: status.readPolicyArn
+        - fromFieldPath: status.bucketArn
+          toFieldPath: spec.resourceArn
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.roleName
+          toFieldPath: spec.roleName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.policyArn
+          toFieldPath: status.accountId
+          transforms:
+            - type: string
+              string:
+                type: Regexp
+                regexp:
+                  match: 'arn:aws:iam::(\d+):.*'
+                  group: 1
+    - name: write-policy
+      base:
+        apiVersion: awsblueprints.io/v1alpha1
+        kind: IAMPolicy
+        spec:
+          compositionSelector:
+            matchLabels:
+              iam.awsblueprints.io/policy-type: write
+              iam.awsblueprints.io/service: s3-bucket
+              iam.awsblueprints.io/attach-policy: "true"
+          resourceArn: ""
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields-composition
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.policyArn
+          toFieldPath: status.writePolicyArn
+        - fromFieldPath: status.bucketArn
+          toFieldPath: spec.resourceArn
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.roleName
+          toFieldPath: spec.roleName
+    - name: s3-bucket
+      base:
+        apiVersion: s3.aws.crossplane.io/v1beta1
+        kind: Bucket
+        spec:
+          deletionPolicy: Delete
+          forProvider:
+            acl: private
+            serverSideEncryptionConfiguration:
+              rules:
+                - applyServerSideEncryptionByDefault:
+                    sseAlgorithm: AES256
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.region
+          toFieldPath: spec.forProvider.locationConstraint
+        - type: ToCompositeFieldPath
+          fromFieldPath: metadata.annotations[crossplane.io/external-name]
+          toFieldPath: status.bucketName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.arn
+          toFieldPath: status.bucketArn

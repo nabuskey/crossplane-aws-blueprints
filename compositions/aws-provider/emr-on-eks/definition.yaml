@@ -57,6 +57,12 @@ spec:
                   type: object
                 eksClusterName:
                   type: string
+                eksOIDC:
+                  type: string
+                virtualClusterId:
+                  type: string
+                permissionsBoundaryArn:
+                  type: string
               required:
                 - resourceConfig
                 - eksClusterName
@@ -64,6 +70,18 @@ spec:
             status:
               properties:
                 virtualClusterId:
+                  type: string
+                roleName:
+                  type: string
+                bucketName:
+                  type: string
+                bucketArn:
+                  type: string
+                accountId:
+                  type: string
+                readPolicyArn:
+                  type: string
+                writePolicyArn:
                   type: string
               type: object
           type: object
