@@ -63,15 +63,36 @@ spec:
                   type: string
                 permissionsBoundaryArn:
                   type: string
+                jobParams:
+                  type: object
+                  properties:
+                    release:
+                      type: string
+                      default: emr-6.4.0-latest
+                    sparkEntryPoint:
+                      type: string
+                    sparkEntryPointArgs:
+                      type: array
+                      items:
+                        type: string
+                    sparkSubmitParameters:
+                      type: string
+                    virtualClusterId:
+                      type: string
+                  required:
+                    - sparkEntryPoint
+                    - sparkSubmitParameters
+                    - virtualClusterId
               required:
                 - resourceConfig
-                - eksClusterName
               type: object
             status:
               properties:
                 virtualClusterId:
                   type: string
                 roleName:
+                  type: string
+                roleArn:
                   type: string
                 bucketName:
                   type: string

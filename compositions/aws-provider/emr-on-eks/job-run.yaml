@@ -64,6 +64,43 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.roleName
           toFieldPath: status.roleName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.roleArn
+          toFieldPath: status.roleArn
+    - name: read-policy-entrypoint
+      base:
+        apiVersion: awsblueprints.io/v1alpha1
+        kind: IAMPolicy
+        spec:
+          compositionSelector:
+            matchLabels:
+              iam.awsblueprints.io/policy-type: read
+              iam.awsblueprints.io/service: s3-bucket
+              iam.awsblueprints.io/attach-policy: "true"
+          resourceArn: ""
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields-composition
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.policyArn
+          toFieldPath: status.readPolicyArn
+        # entrypoint must be a s3 bucket for this composition
+        - fromFieldPath: spec.jobParams.sparkEntryPoint
+          toFieldPath: spec.resourceArn
+          transforms:
+            - type: string
+              string:
+                type: Regexp
+                regexp:
+                  match: 's3://([^/]*)/.*'
+                  group: 1
+            - type: string
+              string:
+                type: Format
+                fmt: "arn:aws:s3:::%s"
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.roleName
+          toFieldPath: spec.roleName
     - name: read-policy
       base:
         apiVersion: awsblueprints.io/v1alpha1
@@ -123,7 +160,7 @@ spec:
         apiVersion: s3.aws.crossplane.io/v1beta1
         kind: Bucket
         spec:
-          deletionPolicy: Delete
+          deletionPolicy: Orphan # For EMR job data retention
           forProvider:
             acl: private
             serverSideEncryptionConfiguration:
@@ -131,8 +168,12 @@ spec:
                 - applyServerSideEncryptionByDefault:
                     sseAlgorithm: AES256
       patches:
-        - type: PatchSet
-          patchSetName: common-fields
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.region
+          toFieldPath: spec.forProvider.region
         - type: FromCompositeFieldPath
           fromFieldPath: spec.resourceConfig.region
           toFieldPath: spec.forProvider.locationConstraint
@@ -142,3 +183,53 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.arn
           toFieldPath: status.bucketArn
+    - name: job-run
+      base:
+        apiVersion: emrcontainers.aws.crossplane.io/v1alpha1
+        kind: JobRun
+        spec:
+          forProvider:
+            region: us-west-2
+            executionRoleARN: ""
+            jobDriver:
+              sparkSubmitJobDriver:
+                entryPoint: ""
+                entryPointArguments: []
+                sparkSubmitParameters: ""
+            releaseLabel: ""
+            virtualClusterId: ""
+      patches:
+        - type: PatchSet
+          patchSetName: common-fields
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.jobParams.sparkEntryPoint
+          toFieldPath: spec.forProvider.jobDriver.sparkSubmitJobDriver.entryPoint
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.jobParams.sparkSubmitParameters
+          toFieldPath: spec.forProvider.jobDriver.sparkSubmitJobDriver.sparkSubmitParameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.jobParams.release
+          toFieldPath: spec.forProvider.releaseLabel
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.jobParams.virtualClusterId
+          toFieldPath: spec.forProvider.virtualClusterId
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.bucketName
+          toFieldPath: spec.forProvider.jobDriver.sparkSubmitJobDriver.entryPointArguments[0] # We assume the first argument is always a S3 bucket.
+          transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "s3://%s/job_output"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.jobParams.sparkEntryPointArgs
+          toFieldPath: spec.forProvider.jobDriver.sparkSubmitJobDriver.entryPointArguments
+          policy:
+            mergeOptions:
+              appendSlice: true
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.roleArn
+          toFieldPath: spec.forProvider.executionRoleARN
+          policy:
+            fromFieldPath: Required
+
