@@ -113,9 +113,9 @@ spec:
           forProvider:
             version:
             roleArnSelector:
+              matchControllerRef: true
               matchLabels:
                 role: controlplane
-                crossplane.io/claim-name:
             resourcesVpcConfig:
               endpointPrivateAccess:
               endpointPublicAccess:
@@ -320,6 +320,19 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.arn
+          toFieldPath: status.accountID
+          transforms:
+            - type: string
+              string:
+                type: Regexp
+                regexp:
+                  match: 'arn:aws:iam::(\d+):.*'
+                  group: 1
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.arn
+          toFieldPath: status.nodeGroupArn
     - name: eks-managed-nodegroup-worker-node-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -453,5 +466,55 @@ spec:
           toFieldPath: metadata.name
           policy:
             fromFieldPath: Required
+      readinessChecks:
+        - type: None
+    - name: aws-auth-configmap
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          deletionPolicy: Orphan
+          managementPolicy: ObserveCreateUpdate
+          providerConfigRef:
+            name: "invalid"
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: aws-auth
+                namespace: kube-system
+      patches:
+        - fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-aws-auth-%s"
+          policy:
+            fromFieldPath: Required
+        - fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: spec.providerConfigRef.name
+          policy:
+            fromFieldPath: Required
+        - type: CombineFromComposite
+          combine:
+            strategy: string
+            variables:
+              - fromFieldPath: status.nodeGroupArn
+              - fromFieldPath: status.accountID
+              - fromFieldPath: spec.parameters.adminRole
+            string:
+              fmt: |
+                - groups:
+                  - system:bootstrappers
+                  - system:nodes
+                  rolearn: %s
+                  username: system:node:{{EC2PrivateDNSName}}
+                - groups:
+                  - system:masters
+                  rolearn: arn:aws:iam::%s:role/%s
+                  username: admin
+          toFieldPath: spec.forProvider.manifest.data.mapRoles
       readinessChecks:
         - type: None

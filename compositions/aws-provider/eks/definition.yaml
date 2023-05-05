@@ -43,7 +43,6 @@ spec:
                   description: EKS Input parameters
                   type: object
                   properties:
-
                     version:
                       description: Kubernetes Version
                       type: string
@@ -66,6 +65,10 @@ spec:
                       description: Name of network to use for label-based subnet lookup (subnet label 'network.awsblueprints.io/network-id'). Unused in compositions that use explicit subnet Id through the 'subnetIds' parameter
                       type: string
                       default: ""
+                    adminRole:
+                      description: Name of the role in the same account to give administrator access to this cluster.
+                      type: string
+                      default: Admin
                   required:
                     - version
                 managedNodeGroups:
@@ -141,6 +144,10 @@ spec:
             status:
               properties:
                 oidcIssuer:
+                  type: string
+                accountID:
+                  type: string
+                nodeGroupArn:
                   type: string
           required:
             - spec
