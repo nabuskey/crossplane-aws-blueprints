@@ -4,13 +4,13 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: xamazonekss-subnet-labels.cluster.awsblueprints.io
+  name: xamazonekss-cas.cluster.awsblueprints.io
   labels:
     awsblueprints.io/provider: aws
     awsblueprints.io/environment: dev
     awsblueprints.io/subnet-selection: label
     crossplane.io/xrd: xamazonekss.cluster.awsblueprints.io
-    service: eks-karpenter
+    service: eks-cas
 spec:
   writeConnectionSecretsToNamespace: crossplane-system
   compositeTypeRef:
