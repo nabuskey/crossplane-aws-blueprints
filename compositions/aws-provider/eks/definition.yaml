@@ -145,9 +145,15 @@ spec:
               properties:
                 oidcIssuer:
                   type: string
+                oidcEKS:
+                  type: string
                 accountID:
                   type: string
                 nodeGroupArn:
+                  type: string
+                clusterName:
+                  type: string
+                roleArnCAS:
                   type: string
           required:
             - spec
