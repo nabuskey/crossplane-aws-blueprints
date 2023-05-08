@@ -149,7 +149,10 @@ spec:
           toFieldPath: spec.writeConnectionSecretToRef.namespace
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.identity.oidc.issuer
-          toFieldPath: status.oidcIssuer
+          toFieldPath: status.oidcIssuerUrl
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
         - fromFieldPath: metadata.labels[crossplane.io/claim-name]
           toFieldPath: spec.forProvider.resourcesVpcConfig.subnetIdSelector.matchLabels[crossplane.io/claim-name]
           policy:
@@ -203,6 +206,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "control-plane-%s"
     - name: eks-cluster-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -217,6 +227,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-cluster-policy-%s"
     - name: eks-service-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -231,6 +248,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-service-policy-%s"
     - name: eks-vpcresource-controller-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -245,6 +269,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-vpc-policy-%s"
     - name: eks-oidc
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -258,10 +289,17 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
-        - fromFieldPath: status.oidcIssuer
+        - fromFieldPath: status.oidcIssuerUrl
           toFieldPath: spec.forProvider.url
           policy:
             fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "oidc-provider-%s"
 # EKS Managed Node groups
     - name: eks-managed-nodegroups
       base:
@@ -352,6 +390,13 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.arn
           toFieldPath: status.nodeGroupArn
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "managed-node-%s"
     - name: eks-managed-nodegroup-worker-node-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -366,6 +411,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-worker-ng-%s"
     - name: eks-managed-nodegroup-container-registry-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -380,6 +432,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-worker-ecr-%s"
     - name: eks-managed-nodegroup-ssm-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -394,6 +453,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-worker-ssm-%s"
     - name: eks-managed-nodegroup-cni-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -408,6 +474,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-worker-cni-%s"
     - name: eks-csi-driver
       base:
         apiVersion: eks.aws.crossplane.io/v1alpha1
@@ -429,6 +502,13 @@ spec:
       patches:
         - type: PatchSet
           patchSetName: common-parameters
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "eks-worker-csi-%s"
     # Crossplane Kubernetes ProviderConfig for this EKS Cluster
     - name: eks-k8s-provider-config
       base:
@@ -561,7 +641,6 @@ spec:
                     "Version": "2012-10-17",
                     "Statement": [
                         {
-                            "Sid": "VisualEditor0",
                             "Effect": "Allow",
                             "Action": [
                                 "autoscaling:SetDesiredCapacity",
@@ -575,7 +654,6 @@ spec:
                             }
                         },
                         {
-                            "Sid": "VisualEditor1",
                             "Effect": "Allow",
                             "Action": [
                                 "autoscaling:DescribeAutoScalingInstances",
