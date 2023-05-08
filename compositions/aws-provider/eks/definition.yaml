@@ -155,5 +155,7 @@ spec:
                   type: string
                 roleArnCAS:
                   type: string
+                roleArnCSI:
+                  type: string
           required:
             - spec
