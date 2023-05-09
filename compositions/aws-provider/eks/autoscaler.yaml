@@ -325,11 +325,13 @@ spec:
               maxSize:
             capacityType:
             instanceTypes:
+              - m5.large
+              - m5.xlarge
+              - m5.2xlarge
+              - m5.4xlarge
       patches:
         - type: PatchSet
           patchSetName: common-parameters
-        - fromFieldPath: metadata.annotations[crossplane.io/external-name]
-          toFieldPath: metadata.annotations[crossplane.io/external-name]
         - fromFieldPath: spec.managedNodeGroups.minSize
           toFieldPath: spec.forProvider.scalingConfig.minSize
         - fromFieldPath: spec.managedNodeGroups.maxSize

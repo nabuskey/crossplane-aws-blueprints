@@ -109,8 +109,6 @@ spec:
                         type: string
                       type: array
                       description: Instance Type.
-                      default:
-                       - m5.large
                   required:
                     - minSize
                 resourceConfig:

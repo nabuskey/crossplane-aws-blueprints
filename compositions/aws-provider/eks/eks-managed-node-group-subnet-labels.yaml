@@ -187,6 +187,7 @@ spec:
               maxSize:
             capacityType:
             instanceTypes:
+              - m5.large
       patches:
         - type: PatchSet
           patchSetName: common-parameters
