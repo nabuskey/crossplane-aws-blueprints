@@ -4,11 +4,11 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xdaskhub.awsblueprints.io
+  name: xdaskhubs.awsblueprints.io
 spec:
   claimNames:
     kind: DaskHub
-    plural: daskhubs 
+    plural: daskhubs
   group: awsblueprints.io
   names:
     kind: XDaskHub
@@ -26,8 +26,7 @@ spec:
                   description: Parameters to collect information about the deployment
                   type: object
                   properties:
-                    kubernetes-provider-config
-                    eksOidcProvider:
+                    eksOidc:
                       description: The full OIDC provider ID. for example, oidc.eks.us-west-2.amazonaws.com/id/23IJU180U5890123HNO311
                       type: string
                     targetNS:
@@ -44,7 +43,7 @@ spec:
                       description: The cognito domain that provides userinfo, token, etc
                       type: string
                   required:
-                  - eksOidcProviderString
+                  - eksOidc
                 resourceConfig:
                   description: ResourceConfig defines general properties of this AWS resource.
                   properties:
@@ -53,6 +52,10 @@ spec:
                       enum:
                       - Delete
                       - Orphan
+                      type: string
+                    awsProviderConfigName:
+                      type: string
+                    kubernetesProviderConfigName:
                       type: string
                     region:
                       type: string
@@ -71,16 +74,14 @@ spec:
                       type: array
                   required:
                   - region
-                  - tags
+                  - awsProviderConfigName
+                  - kubernetesProviderConfigName
                   type: object
               required:
-              - project
               - resourceConfig
               type: object
             status:
               properties:
-                projectName: 
-                  type: string
                 awsAccountId:
                   type: string
                 bucketNameUsers:

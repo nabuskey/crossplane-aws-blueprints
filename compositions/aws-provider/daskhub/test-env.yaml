@@ -4,9 +4,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: daskhub-cognito.awsblueprints.io
+  name: daskhub-password.awsblueprints.io
   labels:
-    awsblueprints.io/configuration: cognito
+    awsblueprints.io/configuration: password
     awsblueprints.io/environment: test
 spec:
   writeConnectionSecretsToNamespace: crossplane-system
@@ -14,29 +14,25 @@ spec:
     apiVersion: awsblueprints.io/v1alpha1
     kind: XDaskHub
   patchSets:
-    - name: common-fields
+    - name: common-fields-aws
       patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.awsProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
         - type: FromCompositeFieldPath
           fromFieldPath: spec.resourceConfig.deletionPolicy
           toFieldPath: spec.deletionPolicy
         - type: FromCompositeFieldPath
           fromFieldPath: spec.resourceConfig.region
           toFieldPath: spec.forProvider.region
-    #this pathset creates the provider config based on the cloud account and cluster name
-    - name: optional-fields
+    - name: common-fields-kubernetes
       patches:
-        - type: CombineFromComposite
-          combine:
-            variables:
-            - fromFieldPath: spec.project.cloudAccount
-            - fromFieldPath: spec.project.clusterName
-            strategy: string
-            string:
-              fmt: "%s-%s"
-          toFieldPath: spec.providerConfigRef.name      
         - type: FromCompositeFieldPath
-          fromFieldPath: spec.resourceConfig.region
-          toFieldPath: spec.forProvider.region
+          fromFieldPath: spec.resourceConfig.kubernetesProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.deletionPolicy
+          toFieldPath: spec.deletionPolicy
   resources:
     - name: base-chart-values
       base:
@@ -146,7 +142,7 @@ spec:
                     # 2. Ensuring that `dask-kubernetes` is in your singleuser environment.
                     enabled: false
           providerConfigRef:
-            name: default
+            name: default # We assume this exists and has the right privileges.
       patches:
         - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
           toFieldPath: spec.forProvider.manifest.metadata.namespace
@@ -173,29 +169,20 @@ spec:
                   serviceAccountName: jupyter-user
       patches:
         - type: PatchSet
-          patchSetName: common-fields
+          patchSetName: common-fields-kubernetes
         - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
           toFieldPath: spec.forProvider.valuesFrom[0].configMapKeyRef.namespace
         - fromFieldPath: spec.parameters.targetNS
           toFieldPath: spec.forProvider.namespace
-        - fromFieldPath: spec.project.name
-          toFieldPath: spec.forProvider.values.jupyterhub.singleuser.serviceAccountName
-          transforms:
-            - type: string
-              string:
-                fmt: "oss-%s-s3-serv-account"
     - name: s3-bucket-users
       base:
         apiVersion: s3.aws.crossplane.io/v1beta1
         kind: Bucket
         spec:
-          #deletionPolicy: Delete
           forProvider:
-            acl: private
+            objectOwnership: BucketOwnerEnforced
             publicAccessBlockConfiguration:
-              blockPublicAcls: true
               blockPublicPolicy: true
-              ignorePublicAcls: true
               restrictPublicBuckets: true
             serverSideEncryptionConfiguration:
               rules:
@@ -203,7 +190,7 @@ spec:
                     sseAlgorithm: AES256
       patches:
         - type: PatchSet
-          patchSetName: common-fields
+          patchSetName: common-fields-aws
         - type: CombineFromComposite
           combine:
             variables:
@@ -229,6 +216,7 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.arn
           toFieldPath: status.bucketArnUsers
+    # IRSA bucket access for SA named jupyter-user
     - name: s3-policy
       base:
         apiVersion: iam.aws.crossplane.io/v1beta1
@@ -239,7 +227,7 @@ spec:
             document: ""
       patches:
         - type: PatchSet
-          patchSetName: common-fields
+          patchSetName: common-fields-aws
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.arn
           toFieldPath: status.policyArnS3
@@ -306,7 +294,7 @@ spec:
             role: irsa-single-user
       patches:
         - type: PatchSet
-          patchSetName: common-fields
+          patchSetName: common-fields-aws
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.roleID
           toFieldPath: status.singleUserRoleName
@@ -317,9 +305,9 @@ spec:
           combine:
             variables:
             - fromFieldPath: status.awsAccountId
-            - fromFieldPath: spec.parameters.eksOidcProvider
-            - fromFieldPath: spec.parameters.eksOidcProvider
-            - fromFieldPath: spec.parameters.eksOidcProvider
+            - fromFieldPath: spec.parameters.eksOidc
+            - fromFieldPath: spec.parameters.eksOidc
+            - fromFieldPath: spec.parameters.eksOidc
             - fromFieldPath: spec.parameters.targetNS
             strategy: string
             string:
@@ -355,7 +343,7 @@ spec:
                 role: irsa-single-user
       patches:
         - type: PatchSet
-          patchSetName: common-fields
+          patchSetName: common-fields-aws
         - type: FromCompositeFieldPath
           fromFieldPath: status.policyArnS3
           toFieldPath: spec.forProvider.policyArn
@@ -375,7 +363,7 @@ spec:
                 namespace: invalid
       patches:
         - type: PatchSet
-          patchSetName: common-fields
+          patchSetName: common-fields-kubernetes
         - type: FromCompositeFieldPath
           fromFieldPath: status.singleUserRoleArn
           toFieldPath: spec.forProvider.manifest.metadata.annotations[eks.amazonaws.com/role-arn]
