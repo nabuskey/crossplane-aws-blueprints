@@ -112,7 +112,6 @@ spec:
                               print("dask-gateway service not found, this should not happen!")
                         10-use-dummy-pass: |
                           c.DummyAuthenticator.password = "mySuperSecretPassword1337"
-
                     singleuser:
                       image:
                         name: pangeo/base-notebook  # Image to use for singleuser environment. Must include dask-gateway.
@@ -167,6 +166,54 @@ spec:
               jupyterhub:
                 singleuser:
                   serviceAccountName: jupyter-user
+                  profileList:
+                    - display_name: "Small Server"
+                      description: "Small notebook server. 1GB RAM/1 CPU reserved. Up to 4GB RAM/4 CPU as needed."
+                      default: true
+                      kubespawner_override:
+                        mem_guarantee: 1G
+                        mem_limit: 4G
+                        cpu_guarantee: 1
+                        cpu_limit: 4
+                      profile_options:
+                        image:
+                          display_name: Image
+                          choices:
+                            vanila:
+                              display_name: Vanila Notebook
+                              slug: "vanila"
+                              kubespawner_override:
+                                image: "jupyterhub/singleuser:3"
+                            tensorflow:
+                              display_name: Pangeo Tensorflow ML Notebook
+                              slug: "tensorflow"
+                              kubespawner_override:
+                                image: "pangeo/ml-notebook:latest"
+                            pytorch:
+                              display_name: Pangeo PyTorch ML Notebook
+                              default: true
+                              slug: "pytorch"
+                              kubespawner_override:
+                                image: "pangeo/pytorch-notebook:latest"
+                    - display_name: "Large Server"
+                      description: "Large notebook server. 2GB RAM/2 CPU reserved. Up to 8GB RAM/4 CPU as needed."
+                      kubespawner_override:
+                        mem_guarantee: 2G
+                        mem_limit: 8G
+                        cpu_guarantee: 2
+                        cpu_limit: 4
+                    - display_name: "Extra Large Server"
+                      description: "Extra Large notebook server. 16GB RAM/4 CPU reserved."
+                      kubespawner_override:
+                        mem_guarantee: 13G
+                        mem_limit: 16G
+                        cpu_guarantee: 3
+                        cpu_limit: 4
+                  cpu:
+                    guarantee: 1
+                  memory:
+                    guarantee: 1G
+                    limit: 4G
       patches:
         - type: PatchSet
           patchSetName: common-fields-kubernetes
