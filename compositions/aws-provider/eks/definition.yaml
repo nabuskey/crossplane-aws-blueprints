@@ -21,15 +21,9 @@ spec:
   versions:
     - name: v1alpha1
       additionalPrinterColumns:
-      - jsonPath: .status.conditions[?(@.type=='Ready')].status
-        name: READY
+      - jsonPath: .status.clusterName
+        name: CLUSTER-NAME
         type: string
-      - jsonPath: .status.conditions[?(@.type=='Synced')].status
-        name: SYNCED
-        type: string
-      - jsonPath: .metadata.creationTimestamp
-        name: AGE
-        type: date
       served: true
       referenceable: true
       schema:
