@@ -31,9 +31,7 @@ spec:
                       - Delete
                       - Orphan
                       type: string
-                    name:
-                      description: Set the name of this resource in AWS to the value
-                        provided by this field.
+                    kubernetesProviderConfigName:
                       type: string
                     providerConfigName:
                       type: string
@@ -62,6 +60,8 @@ spec:
                 virtualClusterId:
                   type: string
                 permissionsBoundaryArn:
+                  type: string
+                targetNS:
                   type: string
                 jobParams:
                   type: object

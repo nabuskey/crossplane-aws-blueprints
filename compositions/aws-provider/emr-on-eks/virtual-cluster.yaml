@@ -42,13 +42,16 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: spec.resourceConfig.name
           toFieldPath: metadata.annotations[crossplane.io/external-name]
-    - name: namespace
+    - name: common-fields-kubernetes
       patches:
         - type: FromCompositeFieldPath
-          fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+          fromFieldPath: spec.resourceConfig.kubernetesProviderConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceConfig.deletionPolicy
+          toFieldPath: spec.deletionPolicy
+        - fromFieldPath: spec.targetNS
           toFieldPath: spec.forProvider.manifest.metadata.namespace
-          policy:
-            fromFieldPath: Required
   resources:
     - name: role
       base:
@@ -86,7 +89,7 @@ spec:
                   verbs: ["get", "list", "watch", "describe", "create", "edit", "delete", "deletecollection", "annotate", "patch", "label"]
       patches:
         - type: PatchSet
-          patchSetName: namespace
+          patchSetName: common-fields-kubernetes
     - name: role-binding
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -109,7 +112,7 @@ spec:
                 apiGroup: rbac.authorization.k8s.io
       patches:
         - type: PatchSet
-          patchSetName: namespace
+          patchSetName: common-fields-kubernetes
     - name: virtual-cluster
       base:
         apiVersion: emrcontainers.aws.crossplane.io/v1alpha1
@@ -129,7 +132,7 @@ spec:
         - type: PatchSet
           patchSetName: common-fields
         - type: FromCompositeFieldPath
-          fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+          fromFieldPath: spec.targetNS
           toFieldPath: spec.forProvider.containerProvider.info.eksInfo.namespace
           policy:
             fromFieldPath: Required

@@ -1,0 +1,28 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+apiVersion: cluster.awsblueprints.io/v1alpha1
+kind: amazonEks
+metadata:
+  name: example-eks-on-emr
+  namespace: default
+spec:
+  compositionSelector:
+    matchLabels:
+      awsblueprints.io/provider: aws
+      awsblueprints.io/environment: dev
+      awsblueprints.io/subnet-selection: label
+      service: emr
+  resourceConfig:
+    providerConfigName: aws-provider-config
+    region: us-west-2
+  parameters:
+    #EKS Input parameters
+    version: "1.24"
+    endpointPrivateAccess: false
+    endpointPublicAccess: true
+  managedNodeGroups:
+    minSize: 2
+  writeConnectionSecretToRef:
+    name: example-eks-on-emr
