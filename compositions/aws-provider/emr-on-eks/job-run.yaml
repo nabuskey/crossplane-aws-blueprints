@@ -161,7 +161,10 @@ spec:
         spec:
           deletionPolicy: Orphan # For EMR job data retention
           forProvider:
-            acl: private
+            objectOwnership: BucketOwnerEnforced
+            publicAccessBlockConfiguration:
+              blockPublicPolicy: true
+              restrictPublicBuckets: true
             serverSideEncryptionConfiguration:
               rules:
                 - applyServerSideEncryptionByDefault:
@@ -215,6 +218,8 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: status.bucketName
           toFieldPath: spec.forProvider.jobDriver.sparkSubmitJobDriver.entryPointArguments[0] # We assume the first argument is always a S3 bucket.
+          policy:
+            fromFieldPath: Required
           transforms:
             - type: string
               string:
